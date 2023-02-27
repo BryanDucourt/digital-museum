@@ -1,5 +1,9 @@
 <template>
   <div id="webgl" style="height: 100%; width: 100%" ref="canvasRef"></div>
+  <div
+    style="z-index: 2; position: absolute; height: 10%; width: 10%; left: 0; top: 0"
+    ref="above"
+  ></div>
 </template>
 
 <script setup lang="ts">
@@ -9,17 +13,14 @@ import { useClick } from '../scripts/mouse'
 
 let click = useClick()
 
-// usePage('webgl')
 let page = new Page(click)
-// let container: HTMLElement | null
+
 const canvasRef = ref()
-// function render() {
-//   requestAnimationFrame(render)
-//   page.renderer.render(page.scene, page.camara)
-// }
+const above = ref()
 
 onMounted(() => {
   canvasRef.value.appendChild(page.renderer.domElement)
+  above.value.appendChild(page.renderer_above.domElement)
   canvasRef.value.addEventListener('mousemove', function (evt: MouseEvent) {
     page.onMouseMove(evt, canvasRef)
   })

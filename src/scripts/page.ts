@@ -13,19 +13,18 @@ import {
   Vector2,
   Object3D,
   SphereGeometry,
-  Group,
-  Material
+  Group
 } from 'three'
 import { Ref } from 'vue'
-import { shiftLeft } from 'three/examples/jsm/nodes/shadernode/ShaderNodeBaseElements'
-import { ThreeMFLoader } from 'three/examples/jsm/loaders/3MFLoader'
 
 export class Page {
   width: number
   height: number
-  camara: Camera
+  camera: Camera
+  camera_above: Camera
   scene: Scene
   renderer: WebGLRenderer
+  renderer_above: WebGLRenderer
   raycaster: Raycaster
   onClickPosition: Vector2
   mouse: Vector2
@@ -50,13 +49,22 @@ export class Page {
     this.scene.add(this.inter)
     this.raycaster = new Raycaster()
 
-    this.camara = new PerspectiveCamera(45, this.width / this.height, 1, 1000)
-    this.camara.position.set(0, 0, 50)
-    this.camara.lookAt(this.scene.position)
+    this.camera_above = new PerspectiveCamera(45, this.width / this.height, 1, 1000)
+    this.camera_above.position.set(50, 50, 50)
+    this.camera_above.lookAt(this.scene.position)
+
+    this.camera = new PerspectiveCamera(45, this.width / this.height, 1, 1000)
+    this.camera.position.set(0, 0, 50)
+    this.camera.lookAt(this.scene.position)
 
     this.renderer = new WebGLRenderer()
     this.renderer.setSize(this.width, this.height)
     this.renderer.setPixelRatio(window.devicePixelRatio)
+    this.renderer.domElement.style.zIndex = '1'
+
+    this.renderer_above = new WebGLRenderer()
+    this.renderer_above.setSize(this.width / 10, this.height / 10)
+    this.renderer_above.setPixelRatio(window.devicePixelRatio)
 
     const loader = new TextureLoader()
     const planeTexture = loader.load('/uv_grid_opengl.jpg')
@@ -83,7 +91,7 @@ export class Page {
 
   getIntersects(objects: Object3D[]) {
     this.mouse.set(this.onClickPosition.x * 2 - 1, -(this.onClickPosition.y * 2) + 1)
-    this.raycaster.setFromCamera(this.mouse, this.camara)
+    this.raycaster.setFromCamera(this.mouse, this.camera)
     return this.raycaster.intersectObjects(objects, false)
   }
 
@@ -91,7 +99,8 @@ export class Page {
     requestAnimationFrame(this.render)
     if (this.flag.value) (this.inter.material as MeshBasicMaterial).color.set(0x00ff00)
     else (this.inter.material as MeshBasicMaterial).color.set(0xff0000)
-    this.renderer.render(this.scene, this.camara)
+    this.renderer.render(this.scene, this.camera)
+    this.renderer_above.render(this.scene, this.camera_above)
   }
 
   onMouseMove(evt: MouseEvent, container: Ref) {
