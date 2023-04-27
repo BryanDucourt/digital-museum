@@ -109,9 +109,9 @@ export class Page {
   centerTurnCurve: number
   turnAmount: number
   pagesGrid: HTMLCanvasElement | undefined
-  left: meshProp | undefined
-  right: meshProp | undefined
-  center: meshProp | undefined
+  left: meshProp
+  right: meshProp
+  center: meshProp
   cover: null | coverProp
   pageTurnImpulse: number
   flag: boolean
@@ -177,8 +177,10 @@ export class Page {
     this.centerCurve = 0
     this.centerTurnCurve = 0
 
-    this.buildPages()
-
+    const { left, right, center } = this.buildPages()
+    this.left = left
+    this.right = right
+    this.center = center
     const ticker = new Mesh(
       new PlaneGeometry(0.001, 0.001),
       new MeshBasicMaterial({ color: 'pink' })
@@ -188,9 +190,9 @@ export class Page {
     ticker.position.z = 0.5
     ticker.onBeforeRender = () => {
       this.curPage = Math.floor(this.turnAmount / 2) * 2
-      this.centerCurve = this.center!.curve = 1 - (this.turnAmount % 2)
-      this.centerTurnCurve = this.center!.turnCurve =
-        2 * smooth(1, 0.0, Math.abs(this.center!.curve)) * Math.sign(-this.props.turnSpeed)
+      this.centerCurve = this.center.curve = 1 - (this.turnAmount % 2)
+      this.centerTurnCurve = this.center.turnCurve =
+        2 * smooth(1, 0.0, Math.abs(this.center.curve)) * Math.sign(-this.props.turnSpeed)
       if (this.curPage !== this.prevPage) {
         this.prevPage = this.curPage
         const currentOffset = Math.max(0.001, this.curPage / this.props.pageCount)
@@ -200,20 +202,16 @@ export class Page {
           this.updateGeometry(
             totalWidth * currentOffset,
             -totalWidth * currentOffset * 0.5,
-            this.left!.mesh
+            this.left.mesh
           )
-          this.updateGeometry(
-            totalWidth * remainder,
-            totalWidth * remainder * 0.5,
-            this.right!.mesh
-          )
+          this.updateGeometry(totalWidth * remainder, totalWidth * remainder * 0.5, this.right.mesh)
 
           this.setPagesFrom(
             this.curPage,
-            Math.sign(this.center!.curve),
-            this.left!,
-            this.center!,
-            this.right!
+            Math.sign(this.center.curve),
+            this.left,
+            this.center,
+            this.right
           )
         })
         // console.log(this.camera)
@@ -246,35 +244,37 @@ export class Page {
     c.width = c.height = 1024
     const g = c.getContext('2d')
     let grad = <CanvasGradient>{}
-    if (side == 1) {
-      grad = g!.createLinearGradient(0, 0, 0, 60)
-    } else {
-      grad = g!.createLinearGradient(0, 1024, 0, 1024 - 60)
-    }
-    grad.addColorStop(0, 'black')
-    grad.addColorStop(1, 'white')
+    if (g) {
+      if (side == 1) {
+        grad = g.createLinearGradient(0, 0, 0, 60)
+      } else {
+        grad = g.createLinearGradient(0, 1024, 0, 1024 - 60)
+      }
+      grad.addColorStop(0, 'black')
+      grad.addColorStop(1, 'white')
 
-    g!.fillStyle = grad
-    g!.fillRect(0, 0, 1024, 1024)
-    g!.translate(1024, 0)
-    g!.rotate(Math.PI / 2)
-    g!.scale(1, this.props.bookWidth / this.props.bookHeight)
-    g!.fillStyle = 'black'
-    g!.font = '25px Arial'
+      g.fillStyle = grad
+      g.fillRect(0, 0, 1024, 1024)
+      g.translate(1024, 0)
+      g.rotate(Math.PI / 2)
+      g.scale(1, this.props.bookWidth / this.props.bookHeight)
+      g.fillStyle = 'black'
+      g.font = '25px Arial'
 
-    const leftPadder = side === 0 ? '' : new Array(120).fill(' ').join('')
-    const leftGutter = side === 0 ? 30 : 80
-    let lines = [leftPadder + pageNumber, '']
-    if (this.text != null)
-      lines = lines.concat(
-        this.text.slice(
-          pageNumber * this.props.linesPerPage,
-          (pageNumber + 1) * this.props.linesPerPage
+      const leftPadder = side === 0 ? '' : new Array(120).fill(' ').join('')
+      const leftGutter = side === 0 ? 30 : 80
+      let lines = [leftPadder + pageNumber, '']
+      if (this.text != null)
+        lines = lines.concat(
+          this.text.slice(
+            pageNumber * this.props.linesPerPage,
+            (pageNumber + 1) * this.props.linesPerPage
+          )
         )
-      )
-    lines.forEach((l, i) => {
-      g!.fillText(l, 40 + leftGutter, 40 * (i + 1) + 40)
-    })
+      lines.forEach((l, i) => {
+        g.fillText(l, 40 + leftGutter, 40 * (i + 1) + 40)
+      })
+    }
 
     //  g.font = "450px Libre Baskerville";
     //  g.fillText(lines[0].split(" ")[1], 30, 900);
@@ -315,29 +315,30 @@ export class Page {
     const remainder = 1 - currentOffset
     const totalWidth = this.props.pageCount / 10
 
-    this.left = this.createPage(totalWidth * currentOffset, -totalWidth * currentOffset * 0.5)
-    this.right = this.createPage(totalWidth * remainder, totalWidth * remainder * 0.5)
-    this.center = this.createPage(0.01, 0)
-    this.center.mesh.receiveShadow = false
+    const left = this.createPage(totalWidth * currentOffset, -totalWidth * currentOffset * 0.5)
+    const right = this.createPage(totalWidth * remainder, totalWidth * remainder * 0.5)
+    const center = this.createPage(0.01, 0)
+    center.mesh.receiveShadow = false
     const pageParts = this.coverPage()
-    this.left.leftPage.map = pageParts.map
-    this.left.leftPage.metalness = this.left.leftPage.roughness = 1
-    this.left.leftPage.metalnessMap = this.left.leftPage.roughnessMap = pageParts.metalnessMap
-    this.left.leftPage.normalMap = pageParts.normalMap
+    left.leftPage.map = pageParts.map
+    left.leftPage.metalness = left.leftPage.roughness = 1
+    left.leftPage.metalnessMap = left.leftPage.roughnessMap = pageParts.metalnessMap
+    left.leftPage.normalMap = pageParts.normalMap
 
-    this.left.curve = -1
-    this.right.curve = 1
-    this.center.curve = this.centerCurve
-    this.center.turnCurve = this.centerTurnCurve
-    this.pages.add(this.left.mesh)
-    this.pages.add(this.right.mesh)
-    this.pages.add(this.center.mesh)
+    left.curve = -1
+    right.curve = 1
+    center.curve = this.centerCurve
+    center.turnCurve = this.centerTurnCurve
+    this.pages.add(left.mesh)
+    this.pages.add(right.mesh)
+    this.pages.add(center.mesh)
 
-    this.right.mesh.position.y = this.left.mesh.position.y = this.center.mesh.position.y = 57
-    this.right.mesh.position.z =
-      this.left.mesh.position.z =
-      this.center.mesh.position.z =
+    right.mesh.position.y = left.mesh.position.y = center.mesh.position.y = 57
+    right.mesh.position.z =
+      left.mesh.position.z =
+      center.mesh.position.z =
         (currentOffset - 0.5) * totalWidth
+    return { left, right, center }
   }
 
   coverPage() {
@@ -348,78 +349,82 @@ export class Page {
       const aspect = this.props.bookWidth / this.props.bookHeight
       const g = c.getContext('2d')
       const gold = this.props.typeColor
-      g!.fillStyle = this.props.coverColor
-      g!.fillRect(0, 0, 1024, 1024)
-
+      if (g) {
+        g.fillStyle = this.props.coverColor
+        g.fillRect(0, 0, 1024, 1024)
+      }
       const orm = document.createElement('canvas')
       orm.width = orm.height = 1024
       const ormC = orm.getContext('2d')
-      ormC!.fillStyle = 'rgb(0,80,0)'
-      ormC!.fillRect(0, 0, 1024, 1024)
+      if (ormC) {
+        ormC.fillStyle = 'rgb(0,80,0)'
+        ormC.fillRect(0, 0, 1024, 1024)
 
-      for (let i = 0; i < 20; i++) {
-        const rx = Math.random() * 1024
-        const ry = Math.random() * 1024
-        const radialGrad = ormC!.createRadialGradient(rx, ry, 0, rx, ry, 400 + Math.random() * 100)
-        const rough = Math.floor(32 + Math.random() * 223)
-        radialGrad.addColorStop(0, `rgba(0,${rough},0,0.25)`)
-        radialGrad.addColorStop(1, `rgba(0,${rough},0,0)`)
+        for (let i = 0; i < 20; i++) {
+          const rx = Math.random() * 1024
+          const ry = Math.random() * 1024
+          const radialGrad = ormC.createRadialGradient(rx, ry, 0, rx, ry, 400 + Math.random() * 100)
+          const rough = Math.floor(32 + Math.random() * 223)
+          radialGrad.addColorStop(0, `rgba(0,${rough},0,0.25)`)
+          radialGrad.addColorStop(1, `rgba(0,${rough},0,0)`)
 
-        ormC!.fillStyle = radialGrad
-        ormC!.fillRect(0, 0, 1024, 1024)
+          ormC.fillStyle = radialGrad
+          ormC.fillRect(0, 0, 1024, 1024)
+        }
       }
       const bumpC = document.createElement('canvas')
       bumpC.width = bumpC.height = 1024
       const bumpG = bumpC.getContext('2d')
+      if (bumpG) {
+        bumpG.fillStyle = 'gray'
+        bumpG.fillRect(0, 0, 1024, 1024)
+      }
+      if (g && ormC && bumpG) {
+        g.scale(1, aspect)
+        ormC.scale(1, aspect)
+        bumpG.scale(1, aspect)
 
-      bumpG!.fillStyle = 'gray'
-      bumpG!.fillRect(0, 0, 1024, 1024)
+        g.fillStyle = gold
+        g.font = '700 80px Libre Baskerville'
 
-      g!.scale(1, aspect)
-      ormC!.scale(1, aspect)
-      bumpG!.scale(1, aspect)
+        g.strokeStyle = gold
+        g.lineWidth = 8
+        g.lineJoin = 'round'
+        g.lineCap = 'square'
 
-      g!.fillStyle = gold
-      g!.font = '700 80px Libre Baskerville'
+        this.drawBorder(g, aspect)
 
-      g!.strokeStyle = gold
-      g!.lineWidth = 8
-      g!.lineJoin = 'round'
-      g!.lineCap = 'square'
+        ormC.lineWidth = 8
+        ormC.lineJoin = 'round'
+        ormC.lineCap = 'square'
+        ormC.strokeStyle = 'rgb(0,30,255)'
 
-      this.drawBorder(g!, aspect)
+        bumpG.lineWidth = 8
+        bumpG.lineJoin = 'round'
+        bumpG.lineCap = 'square'
+        bumpG.strokeStyle = 'rgb(255, 30,255)'
 
-      ormC!.lineWidth = 8
-      ormC!.lineJoin = 'round'
-      ormC!.lineCap = 'square'
-      ormC!.strokeStyle = 'rgb(0,30,255)'
+        this.drawBorder(ormC, aspect)
+        this.drawBorder(bumpG, aspect)
 
-      bumpG!.lineWidth = 8
-      bumpG!.lineJoin = 'round'
-      bumpG!.lineCap = 'square'
-      bumpG!.strokeStyle = 'rgb(255, 30,255)'
+        const title = this.filename
+        ormC.fillStyle = 'rgb(0,50,255)'
+        ormC.font = '700 80px Libre Baskerville'
 
-      this.drawBorder(ormC!, aspect)
-      this.drawBorder(bumpG!, aspect)
+        bumpG.shadowColor = 'rgba(255,255,255,1)'
+        bumpG.shadowBlur = 3
+        const shadowOffset = 2000
 
-      const title = this.filename
-      ormC!.fillStyle = 'rgb(0,50,255)'
-      ormC!.font = '700 80px Libre Baskerville'
+        bumpG.shadowOffsetX = 0
+        bumpG.shadowOffsetY = shadowOffset + aspect
+        bumpG.fillStyle = 'black'
+        bumpG.font = '700 80px Libre Baskerville'
 
-      bumpG!.shadowColor = 'rgba(255,255,255,1)'
-      bumpG!.shadowBlur = 3
-      const shadowOffset = 2000
-
-      bumpG!.shadowOffsetX = 0
-      bumpG!.shadowOffsetY = shadowOffset + aspect
-      bumpG!.fillStyle = 'black'
-      bumpG!.font = '700 80px Libre Baskerville'
-
-      const w = g!.measureText(title).width
-      ormC!.fillText(title, 512 - w / 2, 512 / aspect)
-      g!.fillText(title, 512 - w / 2, 512 / aspect)
-      bumpG!.fillText(title, 512 - w / 2, 512 / aspect)
-
+        const w = g.measureText(title).width
+        ormC.fillText(title, 512 - w / 2, 512 / aspect)
+        g.fillText(title, 512 - w / 2, 512 / aspect)
+        bumpG.fillText(title, 512 - w / 2, 512 / aspect)
+      }
       const tex = (canvas: TexImageSource) => {
         const t = new CanvasTexture(canvas)
         t.wrapS = t.wrapT = RepeatWrapping
@@ -437,22 +442,23 @@ export class Page {
 
   bumpToNormal(canvas: HTMLCanvasElement, offset = 1, intensity = 1) {
     const g = canvas.getContext('2d')
-    const src = g!.getImageData(0, 0, canvas.width, canvas.height)
-    const dest = g!.getImageData(0, 0, canvas.width, canvas.height)
+    if (g) {
+      const src = g.getImageData(0, 0, canvas.width, canvas.height)
+      const dest = g.getImageData(0, 0, canvas.width, canvas.height)
 
-    for (let i = 0; i < src.data.length; i += 4) {
-      const red = (src.data[i] - src.data[i + 4 * offset]) * intensity
-      const green = (src.data[i] - src.data[i + 4 * offset * canvas.width]) * intensity
-      const blue = 255 - Math.abs(red) - Math.abs(green)
+      for (let i = 0; i < src.data.length; i += 4) {
+        const red = (src.data[i] - src.data[i + 4 * offset]) * intensity
+        const green = (src.data[i] - src.data[i + 4 * offset * canvas.width]) * intensity
+        const blue = 255 - Math.abs(red) - Math.abs(green)
 
-      dest.data[i] = 128 + red
-      dest.data[i + 1] = 128 + green
-      dest.data[i + 2] = blue
-      dest.data[i + 3] = 255
+        dest.data[i] = 128 + red
+        dest.data[i + 1] = 128 + green
+        dest.data[i + 2] = blue
+        dest.data[i + 3] = 255
+      }
+
+      g.putImageData(dest, 0, 0)
     }
-
-    g!.putImageData(dest, 0, 0)
-
     return canvas
   }
   drawBorder(g: CanvasRenderingContext2D, aspect: number) {
@@ -627,10 +633,10 @@ export class Page {
     const c = document.createElement('canvas')
     const g = c.getContext('2d')
     c.width = c.height = 4
-
-    g!.fillStyle = this.props.coverColor
-    g!.fillRect(0, 0, 4, 4)
-
+    if (g) {
+      g.fillStyle = this.props.coverColor
+      g.fillRect(0, 0, 4, 4)
+    }
     return new CanvasTexture(c)
   }
   bookGrid(angle: number) {
@@ -638,13 +644,14 @@ export class Page {
       const c = document.createElement('canvas')
       c.width = c.height = 1024
       const g = c.getContext('2d')
-
-      g!.fillStyle = 'gray'
-      g!.fillRect(0, 0, 1024, 1024)
-      g!.globalAlpha = 1
-      for (let i = 0; i < 1e2; i++) {
-        g!.fillStyle = `hsl(0,10%,${Math.floor(Math.random() * 10 + 70)}%`
-        g!.fillRect(0, Math.random() * 1024, 1024, 15)
+      if (g) {
+        g.fillStyle = 'gray'
+        g.fillRect(0, 0, 1024, 1024)
+        g.globalAlpha = 1
+        for (let i = 0; i < 1e2; i++) {
+          g.fillStyle = `hsl(0,10%,${Math.floor(Math.random() * 10 + 70)}%`
+          g.fillRect(0, Math.random() * 1024, 1024, 15)
+        }
       }
       this.pagesGrid = c
     }
@@ -727,5 +734,3 @@ export class Page {
     tween.start()
   }
 }
-
-export default Page

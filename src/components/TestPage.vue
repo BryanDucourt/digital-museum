@@ -8,9 +8,9 @@
 <script setup lang="ts">
 import { Page } from '../scripts/page'
 import { onMounted, ref } from 'vue'
-import { useClick } from '../scripts/mouse'
-
-let click = useClick()
+// import { useClick } from '../scripts/mouse'
+//
+// let click = useClick()
 
 let page = new Page('abc')
 

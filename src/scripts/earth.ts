@@ -133,19 +133,19 @@ export class Earth {
     this.scene.add(earth_mesh)
   }
 
-  lg2xyz(longitude: number, latitude: number, radius: number) {
-    const phi = (180 + Number(longitude)) * (Math.PI / 180)
-    const theta = (90 - Number(latitude)) * (Math.PI / 180)
-    return {
-      x: -radius * Math.sin(theta) * Math.cos(phi),
-      y: radius * Math.cos(theta),
-      z: radius * Math.sin(theta) * Math.sin(phi)
-    }
-  }
+  // lg2xyz(longitude: number, latitude: number, radius: number) {
+  //   const phi = (180 + Number(longitude)) * (Math.PI / 180)
+  //   const theta = (90 - Number(latitude)) * (Math.PI / 180)
+  //   return {
+  //     x: -radius * Math.sin(theta) * Math.cos(phi),
+  //     y: radius * Math.cos(theta),
+  //     z: radius * Math.sin(theta) * Math.sin(phi)
+  //   }
+  // }
 
-  rotate(longitude: number, latitude: number) {
-    const pos = this.lg2xyz(longitude, latitude, 60)
-
-    this.camera.position.set((pos.x / 60) * 200, (pos.y / 60) * 200, (pos.z / 60) * 200)
-  }
+  // rotate(longitude: number, latitude: number) {
+  //   const pos = this.lg2xyz(longitude, latitude, 60)
+  //
+  //   this.camera.position.set((pos.x / 60) * 200, (pos.y / 60) * 200, (pos.z / 60) * 200)
+  // }
 }

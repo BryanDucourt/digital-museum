@@ -207,10 +207,10 @@ const handleChange: UploadProps['onChange'] = (uploadFile) => {
   })
 }
 
-const handleRotate = () => {
-  const x = img_data.value?.GPSLongitude
-  const y = img_data.value?.GPSLatitude
-}
+// const handleRotate = () => {
+//   const x = img_data.value?.GPSLongitude
+//   const y = img_data.value?.GPSLatitude
+// }
 
 const handlePoint = () => {
   const trans_cbk = (data: any) => {
