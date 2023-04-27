@@ -2,4 +2,6 @@ declare module '*.vue' {
   import Vue from 'vue'
   export default Vue
 }
-declare module 'three'
+declare module '@types/three'
+declare module 'exif'
+declare module '@types/dat.gui'

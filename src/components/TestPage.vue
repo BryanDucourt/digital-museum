@@ -1,9 +1,8 @@
 <template>
   <div id="webgl" style="height: 100%; width: 100%" ref="canvasRef"></div>
-  <div
-    style="z-index: 2; position: absolute; height: 10%; width: 10%; left: 0; top: 0"
-    ref="above"
-  ></div>
+  <div style="position: absolute; z-index: 1">
+    <button @click="handleNext">prev</button>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -13,18 +12,23 @@ import { useClick } from '../scripts/mouse'
 
 let click = useClick()
 
-let page = new Page(click)
+let page = new Page('abc')
 
 const canvasRef = ref()
-const above = ref()
+
+function animate() {
+  page.render()
+  requestAnimationFrame(animate)
+}
+
+function handleNext() {
+  page.nextPage()
+}
 
 onMounted(() => {
   canvasRef.value.appendChild(page.renderer.domElement)
-  above.value.appendChild(page.renderer_above.domElement)
-  canvasRef.value.addEventListener('mousemove', function (evt: MouseEvent) {
-    page.onMouseMove(evt, canvasRef)
-  })
-  page.render()
+
+  animate()
 })
 </script>
 
