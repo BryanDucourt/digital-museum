@@ -1,7 +1,6 @@
 @font-face {
   font-family: SmilerSans;
-  font-display: auto;
-  src: local('SmileySans'),url('/public/fonts/SmileySans/SmileySans-Oblique.ttf.woff2') format('woff2');
+  src: url("./assets/SmileySans-Oblique.ttf.woff2");
 }
 :root {
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
